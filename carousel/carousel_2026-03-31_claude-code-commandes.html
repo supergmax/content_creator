@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Carousel — 3 commandes Claude Code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #020810;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem;
+      gap: 2rem;
+    }
+
+    /* ══════════════════════════════════════
+       SLIDE BASE — 4:5 portrait 1080×1350
+    ══════════════════════════════════════ */
+    .slide {
+      width: 1080px;
+      height: 1350px;
+      position: relative;
+      overflow: hidden;
+      display: none;
+      flex-shrink: 0;
+    }
+    .slide.active { display: block; }
+
+    /* Grain cinématique */
+    .slide::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0.038;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+    }
+
+    /* ── Gradient overlay bas → lisibilité texte ── */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: linear-gradient(
+        180deg,
+        transparent 0%,
+        transparent 38%,
+        rgba(2, 8, 16, 0.30) 54%,
+        rgba(2, 8, 16, 0.75) 72%,
+        rgba(2, 8, 16, 0.93) 86%,
+        rgba(2, 8, 16, 0.97) 100%
+      );
+    }
+
+    /* ── Grand numéro top-left ── */
+    .big-num {
+      position: absolute;
+      top: 36px;
+      left: 52px;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 310px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      z-index: 3;
+      pointer-events: none;
+      /* color défini en inline sur chaque slide */
+    }
+
+    /* ── Zone contenu — bottom ── */
+    .content {
+      position: absolute;
+      bottom: 112px;
+      left: 72px;
+      right: 72px;
+      z-index: 6;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 100px;
+      border: 1.5px solid;
+      padding: 6px 18px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .slide-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 78px;
+      line-height: 1.0;
+      color: #ffffff;
+      margin-bottom: 24px;
+      letter-spacing: -0.01em;
+    }
+    .slide-title.xl { font-size: 90px; }
+
+    .slide-body {
+      font-family: 'Inter', sans-serif;
+      font-size: 31px;
+      line-height: 1.58;
+      color: rgba(255, 255, 255, 0.76);
+    }
+    .slide-body .c { font-weight: 600; color: #00d4ff; }
+    .slide-body .p { font-weight: 600; color: #ff2d78; }
+
+    .cmd-tag {
+      display: inline-block;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 72px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      padding: 10px 36px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      margin-bottom: 28px;
+    }
+
+    /* ── Navigation bas ── */
+    .nav-bar {
+      position: absolute;
+      bottom: 52px;
+      left: 72px;
+      right: 72px;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dots {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dot {
+      height: 5px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.25);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .dot:not(.active) { width: 5px; }
+    .dot.active { width: 28px; }
+
+    .swipe-hint {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.38);
+    }
+    .swipe-hint.hide { visibility: hidden; }
+
+    /* ══════════════════════════════════════
+       SLIDE CTA (dernière)
+    ══════════════════════════════════════ */
+    .cta-zone {
+      position: absolute;
+      bottom: 112px;
+      left: 72px;
+      right: 72px;
+      z-index: 6;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .cta-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 80px;
+      line-height: 1.0;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    .cta-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 31px;
+      line-height: 1.55;
+      color: rgba(255,255,255,0.72);
+      margin-bottom: 20px;
+    }
+    .cta-sub .c { color: #00d4ff; font-weight: 600; }
+
+    .cta-sep {
+      width: 52px;
+      height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, #ff2d78, #00d4ff);
+      margin-bottom: 44px;
+    }
+
+    .cta-btn {
+      display: inline-block;
+      border: 1.5px solid rgba(255,255,255,0.42);
+      border-radius: 14px;
+      padding: 22px 60px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 32px;
+      font-weight: 600;
+      color: #ffffff;
+      letter-spacing: 0.04em;
+      margin-bottom: 60px;
+    }
+
+    .brand {
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 54px;
+      letter-spacing: 0.12em;
+      background: linear-gradient(90deg, #ff2d78 0%, #9333ea 50%, #00d4ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .brand-handle {
+      font-family: 'Inter', sans-serif;
+      font-size: 20px;
+      color: rgba(255,255,255,0.40);
+      letter-spacing: 0.06em;
+    }
+    .brand-handle span { margin: 0 10px; color: rgba(255,255,255,0.20); }
+
+    /* ══════════════════════════════════════
+       CONTRÔLES EXTÉRIEURS (preview)
+    ══════════════════════════════════════ */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .controls button {
+      background: #18181b;
+      border: 1px solid #3f3f46;
+      color: #fafafa;
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .controls button:hover { background: #27272a; }
+    .ctrl-ctr { color: #52525b; font-size: 13px; min-width: 48px; text-align: center; }
+    .hint { color: #3f3f46; font-size: 11px; }
+
+    @media print {
+      .controls, .hint { display: none; }
+      body { padding: 0; gap: 0; background: #000; }
+      .slide { display: block !important; page-break-after: always; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 1 — INTRO
+═══════════════════════════════════════════════════════ -->
+<div class="slide active" id="s0" style="background:
+  radial-gradient(ellipse 900px 700px at 760px 220px, rgba(0,180,220,0.18) 0%, transparent 60%),
+  radial-gradient(ellipse 500px 400px at 180px 500px, rgba(0,80,140,0.12) 0%, transparent 55%),
+  radial-gradient(ellipse 400px 300px at 540px 900px, rgba(0,100,160,0.08) 0%, transparent 50%),
+  linear-gradient(175deg, #041826 0%, #071d30 35%, #040e1c 65%, #020810 100%);">
+  <div class="overlay"></div>
+  <div class="content">
+    <p class="slide-body" style="margin-bottom:18px;color:rgba(0,212,255,0.75);font-size:18px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;">⚡ StellarPulse · Claude Code</p>
+    <h2 class="slide-title xl">Tu utilises<br>Claude Code ?</h2>
+    <p class="slide-body">
+      Voici <span class="c">3 slash commands</span><br>
+      que la plupart ignorent.<br>
+      Swipe →
+    </p>
+  </div>
+  <div class="nav-bar">
+    <div class="dots" id="dots-0"></div>
+    <div class="swipe-hint">Swipe →</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 2 — /doctor
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="s1" style="background:
+  radial-gradient(ellipse 800px 600px at 760px 180px, rgba(0,212,255,0.14) 0%, transparent 58%),
+  radial-gradient(ellipse 400px 300px at 200px 650px, rgba(0,100,160,0.08) 0%, transparent 50%),
+  linear-gradient(175deg, #021018 0%, #041524 40%, #030b16 70%, #020810 100%);">
+  <div class="overlay"></div>
+  <div class="big-num" style="color:rgba(0,212,255,0.18);">1</div>
+  <div class="content">
+    <div class="badge" style="border-color:rgba(0,212,255,0.5);color:#00d4ff;">• Commande 01</div>
+    <div class="cmd-tag" style="color:#00d4ff;">/doctor</div>
+    <h2 class="slide-title">Diagnostiquer<br>son installation</h2>
+    <p class="slide-body">
+      Lance <span class="c">/doctor</span> pour vérifier<br>
+      ton install et tes paramètres.<br>
+      En une commande.
+    </p>
+  </div>
+  <div class="nav-bar">
+    <div class="dots" id="dots-1"></div>
+    <div class="swipe-hint">Swipe →</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 3 — /desktop
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="s2" style="background:
+  radial-gradient(ellipse 800px 600px at 600px 200px, rgba(255,45,120,0.14) 0%, transparent 58%),
+  radial-gradient(ellipse 500px 400px at 100px 700px, rgba(180,0,80,0.08) 0%, transparent 50%),
+  radial-gradient(ellipse 300px 300px at 900px 900px, rgba(255,45,120,0.06) 0%, transparent 50%),
+  linear-gradient(175deg, #0e0215 0%, #140320 45%, #080210 70%, #020810 100%);">
+  <div class="overlay"></div>
+  <div class="big-num" style="color:rgba(255,45,120,0.18);">2</div>
+  <div class="content">
+    <div class="badge" style="border-color:rgba(255,45,120,0.5);color:#ff2d78;">• Commande 02</div>
+    <div class="cmd-tag" style="color:#ff2d78;">/desktop</div>
+    <h2 class="slide-title">Switcher vers<br>l'app bureau</h2>
+    <p class="slide-body">
+      Transfère ta <span class="p">session terminal</span><br>
+      vers l'app desktop sans friction.<br>
+      Alias : <span class="p">/app</span> · macOS &amp; Windows
+    </p>
+  </div>
+  <div class="nav-bar">
+    <div class="dots" id="dots-2"></div>
+    <div class="swipe-hint">Swipe →</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 4 — /sandbox
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="s3" style="background:
+  radial-gradient(ellipse 750px 550px at 700px 220px, rgba(0,212,255,0.12) 0%, transparent 56%),
+  radial-gradient(ellipse 450px 350px at 200px 500px, rgba(0,150,200,0.08) 0%, transparent 52%),
+  linear-gradient(175deg, #020d18 0%, #031320 40%, #020a14 70%, #020810 100%);">
+  <div class="overlay"></div>
+  <div class="big-num" style="color:rgba(0,212,255,0.18);">3</div>
+  <div class="content">
+    <div class="badge" style="border-color:rgba(0,212,255,0.5);color:#00d4ff;">• Commande 03</div>
+    <div class="cmd-tag" style="color:#00d4ff;">/sandbox</div>
+    <h2 class="slide-title">Gérer son<br>environnement isolé</h2>
+    <p class="slide-body">
+      Configure <span class="c">l'isolation</span> et le<br>
+      basculement d'onglets sandbox.<br>
+      <span class="c">Sécurité</span> et contrôle total.
+    </p>
+  </div>
+  <div class="nav-bar">
+    <div class="dots" id="dots-3"></div>
+    <div class="swipe-hint">Swipe →</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SLIDE 5 — CTA
+═══════════════════════════════════════════════════════ -->
+<div class="slide" id="s4" style="background:
+  radial-gradient(ellipse 600px 500px at 180px 320px, rgba(255,45,120,0.13) 0%, transparent 55%),
+  radial-gradient(ellipse 600px 500px at 900px 420px, rgba(0,212,255,0.13) 0%, transparent 55%),
+  radial-gradient(ellipse 400px 300px at 540px 900px, rgba(124,58,237,0.08) 0%, transparent 50%),
+  linear-gradient(175deg, #060d14 0%, #090f18 50%, #040b12 100%);">
+  <div class="overlay" style="background:linear-gradient(180deg,transparent 0%,transparent 30%,rgba(2,8,16,0.5) 55%,rgba(2,8,16,0.92) 80%,rgba(2,8,16,0.97) 100%)"></div>
+  <div class="cta-zone">
+    <h2 class="cta-title">Save ce post 💾</h2>
+    <p class="cta-sub">
+      Tu veux plus de <span class="c">tips Claude Code</span> ?<br>
+      Tague un dev ou CM qui l'utilise 👇
+    </p>
+    <div class="cta-sep"></div>
+    <div class="cta-btn">🚀 Save pour plus de tips</div>
+    <div class="brand">STELLARPULSE</div>
+    <div class="brand-handle">@stellarpulse0<span>|</span>stellarpulse.fr</div>
+  </div>
+  <div class="nav-bar">
+    <div class="dots" id="dots-4"></div>
+    <div class="swipe-hint hide">Swipe →</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     CONTRÔLES PREVIEW
+═══════════════════════════════════════════════════════ -->
+<div class="controls">
+  <button onclick="prev()">←</button>
+  <span class="ctrl-ctr" id="ctr">1 / 5</span>
+  <button onclick="next()">→</button>
+</div>
+<p class="hint">← → pour naviguer · Ctrl+P pour exporter en PDF</p>
+
+<script>
+  const SLIDES = document.querySelectorAll('.slide');
+  const ACCENT = ['#00d4ff', '#00d4ff', '#ff2d78', '#00d4ff', '#ff2d78'];
+  let idx = 0;
+
+  // Build dot bars inside each slide
+  SLIDES.forEach((_, i) => {
+    const bar = document.getElementById('dots-' + i);
+    SLIDES.forEach((__, j) => {
+      const d = document.createElement('div');
+      d.className = 'dot' + (j === i ? ' active' : '');
+      d.style.background = j === i ? ACCENT[i] : 'rgba(255,255,255,0.25)';
+      d.onclick = () => show(j);
+      bar.appendChild(d);
+    });
+  });
+
+  function show(i) {
+    SLIDES.forEach((s, j) => s.classList.toggle('active', j === i));
+    document.getElementById('ctr').textContent = `${i + 1} / ${SLIDES.length}`;
+    idx = i;
+  }
+
+  function next() { if (idx < SLIDES.length - 1) show(idx + 1); }
+  function prev() { if (idx > 0) show(idx - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') next();
+    if (e.key === 'ArrowLeft') prev();
+  });
+</script>
+</body>
+</html>
