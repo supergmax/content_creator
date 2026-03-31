@@ -82,6 +82,7 @@ async function callClaude(apiKey, model, system, userMessage) {
     'anthropic-version': '2023-06-01'
   }, body);
   if (result.error) throw new Error(`Claude API: ${result.error.message}`);
+  if (!result.content?.[0]?.text) throw new Error('Claude API a retourné une réponse vide');
   return result.content[0].text;
 }
 
@@ -99,6 +100,7 @@ async function callOpenAI(apiKey, model, system, userMessage) {
     'Authorization': `Bearer ${apiKey}`
   }, body);
   if (result.error) throw new Error(`OpenAI API: ${result.error.message}`);
+  if (!result.choices?.[0]?.message?.content) throw new Error('OpenAI API a retourné une réponse vide');
   return result.choices[0].message.content;
 }
 
@@ -147,6 +149,7 @@ function extractJSON(text) {
 
 // ── Request router ─────────────────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
+  try {
   const url = req.url.split('?')[0];
 
   // Serve index.html
@@ -246,6 +249,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   sendJSON(res, 404, { error: `Route not found: ${req.method} ${url}` });
+  } catch (err) {
+    if (!res.headersSent) sendJSON(res, 500, { error: 'Internal server error' });
+  }
 });
 
 server.listen(PORT, '127.0.0.1', () => {

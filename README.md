@@ -73,6 +73,13 @@ content_creator/
 └── tweet/              # Exports tweet
 ```
 
+## Notes importantes
+
+- Le bouton **⬇ Tous** du carousel télécharge chaque slide individuellement (pas de ZIP)
+- Les URLs d'images DALL-E expirent après ~1h — téléchargez vos illustrations rapidement
+- html2canvas peut avoir du mal avec les polices Google Fonts si vous êtes hors ligne
+- Le terminal doit rester ouvert pendant l'utilisation (il fait tourner le serveur)
+
 ## Notes de sécurité
 
 - `config.json` est dans `.gitignore` — ne le commitez pas
