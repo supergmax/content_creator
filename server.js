@@ -172,7 +172,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && url === '/api/config') {
     const body = await readBody(req);
     const cfg = readConfig();
-    const updated = { ...cfg, ...body };
+    const updated = {
+      ...cfg,
+      ...(body.provider !== undefined && { provider: body.provider }),
+      ...(body.apiKey !== undefined && { apiKey: body.apiKey }),
+      ...(body.model !== undefined && { model: body.model })
+    };
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(updated, null, 2));
     sendJSON(res, 200, { ok: true });
     return;
@@ -182,6 +187,12 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'POST' && url === '/api/generate') {
     const { platform, userBrief, tone, hashtags, slideCount, instructions, postText } = await readBody(req);
     const cfg = readConfig();
+
+    const ALLOWED_PLATFORMS = ['carousel', 'story', 'linkedin', 'tweet', 'theme-extract'];
+    if (!ALLOWED_PLATFORMS.includes(platform)) {
+      sendJSON(res, 400, { error: `Plateforme inconnue: ${platform}` });
+      return;
+    }
 
     const designMd = readLabFile('design.md');
     const contentMd = readLabFile('content.md');
