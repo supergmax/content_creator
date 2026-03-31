@@ -42,7 +42,7 @@
 
 ## CTA récurrents par plateforme
 - Instagram Carousel : "Sauve ce post 💾", "Tague un CM 👋", "Dernière slide →"
-- Instagram Story : "Swipe up", "Lien en bio", "Réponds à ce sticker"
+- Instagram Story : "Lien en bio", "Voir le sticker lien 👆", "Réponds à ce sticker"
 - LinkedIn : "Qu'en pensez-vous ? Partagez en commentaire 👇"
 - Twitter/X : "RT si tu vis ça", "Vrai ou pas ?", thread à développer
 
