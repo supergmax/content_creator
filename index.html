@@ -462,9 +462,9 @@ function renderSlide(i) {
   el.style.color = s.text_color || '#fff';
   const total = slides.length;
   el.innerHTML = `
-    <div style="font-size:60px;margin-bottom:28px;line-height:1">${s.emoji || '✨'}</div>
-    <div style="font-size:${i===0?'54px':'46px'};font-weight:700;line-height:1.2;margin-bottom:28px;letter-spacing:-0.02em">${s.title||''}</div>
-    <div style="font-size:28px;line-height:1.55;opacity:0.88;max-width:850px">${(s.body||'').replace(/\n/g,'<br>')}</div>
+    <div style="font-size:60px;margin-bottom:28px;line-height:1">${escHtml(s.emoji || '✨')}</div>
+    <div style="font-size:${i===0?'54px':'46px'};font-weight:700;line-height:1.2;margin-bottom:28px;letter-spacing:-0.02em">${escHtml(s.title||'')}</div>
+    <div style="font-size:28px;line-height:1.55;opacity:0.88;max-width:850px">${escHtml(s.body||'').replace(/\n/g,'<br>')}</div>
     <div style="position:absolute;bottom:36px;right:56px;font-size:20px;opacity:0.35;font-weight:500">${i+1}/${total}</div>
   `;
   document.getElementById('c-counter').textContent = `${i+1} / ${total}`;
@@ -504,6 +504,9 @@ async function generateStory() {
   const subject = document.getElementById('s-subject').value.trim();
   if (!subject) { toast('Entrez un sujet', 'error'); return; }
   setBtnLoading('s-btn', true);
+  document.getElementById('s-empty').style.display = 'flex';
+  document.getElementById('s-preview-wrap').style.display = 'none';
+  setDisabled(['s-dl','s-regen'], true);
   try {
     const res = await api('POST', '/api/generate', {
       platform: 'story',
@@ -517,11 +520,11 @@ async function generateStory() {
     el.style.background = d.bg_color || '#6d28d9';
     el.style.color = d.text_color || '#fff';
     el.innerHTML = `
-      <div style="font-size:80px;margin-bottom:48px;line-height:1">${d.emoji||'✨'}</div>
-      <div style="font-size:72px;font-weight:800;line-height:1.1;margin-bottom:32px;letter-spacing:-0.025em">${d.title||''}</div>
-      ${d.subtitle?`<div style="font-size:38px;opacity:0.8;margin-bottom:32px;font-weight:500">${d.subtitle}</div>`:''}
-      <div style="font-size:34px;line-height:1.6;opacity:0.85;max-width:900px">${(d.body||'').replace(/\n/g,'<br>')}</div>
-      ${d.cta?`<div style="margin-top:80px;background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);padding:28px 56px;border-radius:60px;font-size:34px;font-weight:600">${d.cta}</div>`:''}
+      <div style="font-size:80px;margin-bottom:48px;line-height:1">${escHtml(d.emoji||'✨')}</div>
+      <div style="font-size:72px;font-weight:800;line-height:1.1;margin-bottom:32px;letter-spacing:-0.025em">${escHtml(d.title||'')}</div>
+      ${d.subtitle?`<div style="font-size:38px;opacity:0.8;margin-bottom:32px;font-weight:500">${escHtml(d.subtitle)}</div>`:''}
+      <div style="font-size:34px;line-height:1.6;opacity:0.85;max-width:900px">${escHtml(d.body||'').replace(/\n/g,'<br>')}</div>
+      ${d.cta?`<div style="margin-top:80px;background:rgba(255,255,255,0.2);backdrop-filter:blur(8px);padding:28px 56px;border-radius:60px;font-size:34px;font-weight:600">${escHtml(d.cta)}</div>`:''}
     `;
     document.getElementById('s-empty').style.display = 'none';
     document.getElementById('s-preview-wrap').style.display = 'block';
@@ -575,13 +578,13 @@ async function generateLinkedin() {
         const imgRes = await api('POST', '/api/image', { prompt: imgPrompt });
         if (imgRes.type === 'url') {
           linkedinImgUrl = imgRes.value;
-          document.getElementById('l-img').innerHTML = `<img src="${imgRes.value}" alt="illustration" crossorigin="anonymous">`;
+          document.getElementById('l-img').innerHTML = `<img src="${escHtml(imgRes.value)}" alt="illustration" crossorigin="anonymous">`;
           document.getElementById('l-dl-img').style.display = 'block';
           setDisabled(['l-dl-img'], false);
         } else {
           document.getElementById('l-img').innerHTML = `<div style="text-align:left;font-size:12px"><strong style="color:var(--text-muted);display:block;margin-bottom:0.5rem">Prompt image (Midjourney / DALL-E) :</strong>${escHtml(imgRes.value)}</div>`;
         }
-      } catch (e) { document.getElementById('l-img').innerHTML = `<span style="color:var(--error)">Erreur image: ${e.message}</span>`; }
+      } catch (e) { document.getElementById('l-img').innerHTML = `<span style="color:var(--error)">Erreur image: ${escHtml(e.message)}</span>`; }
     }
   } catch (e) { toast('Erreur: ' + e.message, 'error'); }
   finally { setBtnLoading('l-btn', false, '✨ Générer le post'); }
@@ -632,13 +635,13 @@ async function generateTweet() {
         const imgRes = await api('POST', '/api/image', { prompt: imgPrompt });
         if (imgRes.type === 'url') {
           tweetImgUrl = imgRes.value;
-          document.getElementById('t-img').innerHTML = `<img src="${imgRes.value}" alt="illustration" crossorigin="anonymous">`;
+          document.getElementById('t-img').innerHTML = `<img src="${escHtml(imgRes.value)}" alt="illustration" crossorigin="anonymous">`;
           document.getElementById('t-dl-img').style.display = 'block';
           setDisabled(['t-dl-img'], false);
         } else {
           document.getElementById('t-img').innerHTML = `<div style="text-align:left;font-size:12px"><strong style="color:var(--text-muted);display:block;margin-bottom:0.5rem">Prompt image (Midjourney / DALL-E) :</strong>${escHtml(imgRes.value)}</div>`;
         }
-      } catch (e) { document.getElementById('t-img').innerHTML = `<span style="color:var(--error)">Erreur image: ${e.message}</span>`; }
+      } catch (e) { document.getElementById('t-img').innerHTML = `<span style="color:var(--error)">Erreur image: ${escHtml(e.message)}</span>`; }
     }
   } catch (e) { toast('Erreur: ' + e.message, 'error'); }
   finally { setBtnLoading('t-btn', false, '✨ Générer le tweet'); }
@@ -663,9 +666,15 @@ async function extractTheme() {
     const res = await api('POST', '/api/generate', { platform: 'theme-extract', postText: input });
     const d = (typeof res.content === 'object' && res.content) ? res.content : {};
     const palette = d.palette || [];
-    document.getElementById('theme-palette').innerHTML = palette.length
-      ? palette.map(c => `<div class="color-swatch" style="background:${escHtml(c)}" title="${escHtml(c)}" onclick="navigator.clipboard.writeText('${escHtml(c)}');toast('${escHtml(c)} copié','info')"></div>`).join('')
-      : '<span style="color:var(--text-dim);font-size:12px">Aucune palette extraite</span>';
+    const paletteEl = document.getElementById('theme-palette');
+    if (palette.length) {
+      paletteEl.innerHTML = palette.map(c => `<div class="color-swatch" style="background:${escHtml(c)}" title="${escHtml(c)}" data-color="${escHtml(c)}"></div>`).join('');
+      paletteEl.querySelectorAll('.color-swatch').forEach(sw => {
+        sw.addEventListener('click', () => { const c = sw.dataset.color; navigator.clipboard.writeText(c); toast(c + ' copié', 'info'); });
+      });
+    } else {
+      paletteEl.innerHTML = '<span style="color:var(--text-dim);font-size:12px">Aucune palette extraite</span>';
+    }
     document.getElementById('theme-typo').textContent = d.typography || '—';
     document.getElementById('theme-mood').textContent = d.mood || '—';
     document.getElementById('theme-keywords').textContent = Array.isArray(d.visual_keywords) ? d.visual_keywords.join(', ') : (d.visual_keywords || '—');
