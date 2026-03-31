@@ -5,6 +5,7 @@
   <title>Carousel — 3 commandes Claude Code</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -264,8 +265,41 @@
     .ctrl-ctr { color: #52525b; font-size: 13px; min-width: 48px; text-align: center; }
     .hint { color: #3f3f46; font-size: 11px; }
 
+    /* ── Export bar ── */
+    .export-bar {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .export-bar button {
+      background: #18181b;
+      border: 1px solid #3f3f46;
+      color: #a1a1aa;
+      padding: 0.45rem 1.1rem;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: background 0.15s, color 0.15s;
+    }
+    .export-bar button:hover { background: #27272a; color: #fafafa; }
+    .export-bar button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .export-bar .spin {
+      width: 12px; height: 12px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      display: none;
+      animation: spin 0.6s linear infinite;
+    }
+    .export-bar button.loading .spin { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     @media print {
-      .controls, .hint { display: none; }
+      .controls, .export-bar, .hint { display: none; }
       body { padding: 0; gap: 0; background: #000; }
       .slide { display: block !important; page-break-after: always; }
     }
@@ -407,7 +441,11 @@
   <span class="ctrl-ctr" id="ctr">1 / 5</span>
   <button onclick="next()">→</button>
 </div>
-<p class="hint">← → pour naviguer · Ctrl+P pour exporter en PDF</p>
+<div class="export-bar">
+  <button id="btn-slide" onclick="exportCurrent()"><span class="spin"></span>⬇ Slide PNG</button>
+  <button id="btn-all" onclick="exportAll()"><span class="spin"></span>⬇ Toutes (PNG)</button>
+</div>
+<p class="hint">← → pour naviguer · PNG via html2canvas</p>
 
 <script>
   const SLIDES = document.querySelectorAll('.slide');
@@ -439,6 +477,47 @@
     if (e.key === 'ArrowRight') next();
     if (e.key === 'ArrowLeft') prev();
   });
+
+  // ── PNG Export ──────────────────────────────────────────
+  async function exportSlide(i) {
+    const slide = SLIDES[i];
+    const hidden = !slide.classList.contains('active');
+    if (hidden) {
+      slide.style.display = 'flex';
+      await new Promise(r => requestAnimationFrame(r));
+    }
+    const canvas = await html2canvas(slide, {
+      scale: 1,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: null,
+      width: 1080,
+      height: 1350
+    });
+    if (hidden) slide.style.display = '';
+    const link = document.createElement('a');
+    link.download = `slide-${i + 1}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  async function exportCurrent() {
+    const btn = document.getElementById('btn-slide');
+    btn.classList.add('loading'); btn.disabled = true;
+    try { await exportSlide(idx); }
+    finally { btn.classList.remove('loading'); btn.disabled = false; }
+  }
+
+  async function exportAll() {
+    const btn = document.getElementById('btn-all');
+    btn.classList.add('loading'); btn.disabled = true;
+    try {
+      for (let i = 0; i < SLIDES.length; i++) {
+        await exportSlide(i);
+        await new Promise(r => setTimeout(r, 300));
+      }
+    } finally { btn.classList.remove('loading'); btn.disabled = false; }
+  }
 </script>
 </body>
 </html>
