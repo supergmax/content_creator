@@ -43,6 +43,55 @@ Les prompts système de chaque plateforme sont dans `lab/prompts/` :
 | `tweet.md` | Tweet / X |
 | `theme-extract.md` | Extraction de thème visuel |
 
+## Utilisation avec Claude Code (sans clé API)
+
+Si vous avez [Claude Code](https://claude.ai/code) installé, vous pouvez générer du contenu directement depuis le terminal — sans lancer `server.js`, sans clé API séparée.
+
+### Prérequis
+
+```bash
+npm install -g @anthropic-ai/claude-code   # ou : claude (si déjà installé)
+```
+
+### Lancement
+
+```bash
+# Dans le dossier content_creator/
+claude
+```
+
+Claude Code lit automatiquement `CLAUDE.md` au démarrage : il connaît la structure du projet et sait lire `lab/design.md` + `lab/content.md` avant chaque génération.
+
+### Exemples de commandes
+
+```
+"génère un carousel Instagram sur les 5 erreurs marketing à éviter"
+"génère une story Instagram pour annoncer notre nouveau produit, ton dynamique"
+"génère un post LinkedIn sur le leadership à distance, ton authentique"
+"génère un tweet percutant sur l'IA dans le marketing, avec hashtags"
+"analyse le thème visuel de : fond sombre, typographie bold, couleurs violet et blanc"
+```
+
+### Workflows disponibles (`skills/`)
+
+| Fichier | Ce que Claude Code fait |
+|---------|------------------------|
+| `skills/carousel.md` | JSON + fichier HTML avec navigation slides → `carousel/` |
+| `skills/story.md` | JSON + fichier HTML format 9:16 → `story/` |
+| `skills/linkedin.md` | Texte + prompt illustration → `linkedin_post/` |
+| `skills/tweet.md` | Tweet avec compteur de caractères → `tweet/` |
+| `skills/extract-theme.md` | Palette + style + suggestion pour `lab/design.md` |
+
+### Export PNG (carousel / story)
+
+Claude Code génère un fichier HTML standalone dans le dossier correspondant.  
+Pour l'exporter en image :
+1. Ouvrir le fichier `.html` dans Chrome
+2. **Ctrl+Shift+P** → "Capture screenshot" (DevTools)  
+   ou **Ctrl+P** → "Enregistrer en PDF"
+
+---
+
 ## Formats d'export
 
 | Plateforme | Format | Dimensions |
