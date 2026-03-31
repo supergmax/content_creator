@@ -2,3 +2,7 @@ config.json
 node_modules/
 *.env
 .env.local
+.claude
+docs/
+dist/
+CLAUDE.md
